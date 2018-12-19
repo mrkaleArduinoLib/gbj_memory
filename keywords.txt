@@ -1,0 +1,35 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+gbj_at24c	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+store	KEYWORD2
+storeStream	KEYWORD2
+setPositionInBytes	KEYWORD2
+setPositionInWords	KEYWORD2
+retrieve	KEYWORD2
+retrieveStream	KEYWORD2
+retrieveCurrent	KEYWORD2
+fill	KEYWORD2
+erase	KEYWORD2
+getPageSize	KEYWORD2
+getPages	KEYWORD2
+getCapacityKiBit	KEYWORD2
+getCapacityBit	KEYWORD2
+getCapacityKiByte	KEYWORD2
+getCapacityByte	KEYWORD2
+getPositionMax	KEYWORD2
+getPositionReal	KEYWORD2
+getPositionInBytes	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
