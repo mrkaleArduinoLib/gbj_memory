@@ -276,6 +276,13 @@ uint8_t retrieveCurrent(uint8_t &data);
 
 
 //------------------------------------------------------------------------------
+// Public setters
+//------------------------------------------------------------------------------
+inline void setPositionInBytes() { _memoryStatus.positionInBytes = true; };
+inline void setPositionInWords() { _memoryStatus.positionInBytes = false; };
+
+
+//------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
 inline uint32_t getCapacityByte() { return _memoryStatus.memorySize; };  // In bytes
@@ -310,14 +317,6 @@ inline void setPageSize(uint16_t pageSize) { _memoryStatus.pageSize = pageSize; 
 inline void setPositionZero(uint16_t zeroPosition) \
   { _memoryStatus.zeroPosition = min(zeroPosition, _memoryStatus.memorySize - 1); };
 uint8_t checkPosition(uint16_t position, uint16_t dataLen);
-
-
-protected:
-//------------------------------------------------------------------------------
-// Protected methods - they return result code if not stated else
-//------------------------------------------------------------------------------
-inline void setPositionInBytes() { _memoryStatus.positionInBytes = true; };
-inline void setPositionInWords() { _memoryStatus.positionInBytes = false; };
 
 };
 

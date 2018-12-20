@@ -59,6 +59,10 @@ Other error codes as well as result code are inherited from the parent library [
 - [fill()](#fill)
 - [erase()](#erase)
 
+#### Setters
+- [setPositionInBytes()](#setPositionIn)
+- [setPositionInWords()](#setPositionIn)
+
 #### Getters
 - [getCapacityByte()](#getCapacityByte)
 - [getCapacityKiByte()](#getCapacityByte)
@@ -68,10 +72,6 @@ Other error codes as well as result code are inherited from the parent library [
 - [getPages()](#getPages)
 - [getPositionReal()](#getPositionReal)
 - [getPositionInBytes()](#getPositionIn)
-
-#### Protected
-- [setPositionInBytes()](#setPositionIn)
-- [setPositionInWords()](#setPositionIn)
 
 Other possible setters and getters are inherited from the parent library [gbjTwoWire](#dependency) and described there.
 
