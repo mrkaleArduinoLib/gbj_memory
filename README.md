@@ -31,7 +31,7 @@ Library for a generic memory on two-wire (I2C) bus as a parent class for specifi
 - **TwoWire**: I2C system library loaded from the file *Wire.h*.
 
 #### Custom Libraries
-- **gbjTwoWire**: I2C custom library loaded from the file *gbj_twowire.h*. The library [gbjMemory](#library) inherits bus transmission functionality from this library.
+- **gbjTwoWire**: I2C custom library loaded from the file *gbj_twowire.h*. The library [gbjMemory](#library) inherits two-wire bus transmission functionality from this library.
 
 
 <a id="constants"></a>
@@ -107,9 +107,6 @@ The library does not need special constructor and destructor, so that the inheri
 #### Returns
 Object performing the memory management.
 The constructor cannot return [a result or error code](#constants) directly, however, it stores them in the instance object. The result can be tested in the operational code with the inhereted method `getLastResult()`, `isError()`, or `isSuccess()`.
-
-#### Example
-The method has all arguments defaulted and calling without any parameters is equivalent to the calling with all arguments set by corresponding constant with default value:
 
 [Back to interface](#interface)
 
