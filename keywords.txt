@@ -5,7 +5,7 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-gbj_at24c	KEYWORD1
+gbj_memory	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)

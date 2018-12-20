@@ -61,10 +61,12 @@ gbj_memory(uint32_t clockSpeed = CLOCK_100KHZ, uint8_t pinSDA = 4, uint8_t pinSC
   which determine the capacity parameters of the memory.
 
   PARAMETERS:
-  memorySize - Capacity of the memory in bytes.
-             - Data type: non-negative integer
-             - Default value: none
-             - Limited range: 0 ~ 65535
+  maxPosition - Maximal real position of the memory in bytes. Usually it expresses
+                capacity of the memory minus one, but can be less if some end
+                part of the memory cannot be used.
+                - Data type: non-negative integer
+                - Default value: none
+                - Limited range: 0 ~ 65535
 
   pageSize - Size of the memory page in bytes. This is a chunk of bytes that can
              be written to the memory at once.
@@ -72,18 +74,19 @@ gbj_memory(uint32_t clockSpeed = CLOCK_100KHZ, uint8_t pinSDA = 4, uint8_t pinSC
              - Default value: none
              - Limited range: 0 ~ 65535
 
-  zeroPosition - Real memory position where the memory storage starts in bytes.
-                 For instance, real time clock chips have own read only memory
-                 starting just after time keeping registers.
-                 Memory position in all methods is counted from 0 and considered
-                 as a logical position.
-               - Data type: non-negative integer
-               - Default value: 0
-               - Limited range: 0 ~ (memorySize - 1)
+  minPosition - Minimal real memory position where the memory storage starts in
+                bytes. For instance, real time clock chips have own read only memory
+                starting just after time keeping registers.
+                However, memory position in all other methods is counted from 0
+                and considered as a logical position, i.e., position from
+                the minimal real position.
+                - Data type: non-negative integer
+                - Default value: 0
+                - Limited range: 0 ~ maxPosition
   RETURN:
   Result code.
 */
-uint8_t begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition = 0);
+uint8_t begin(uint16_t maxPosition, uint16_t pageSize, uint16_t minPosition = 0);
 
 
 /*
@@ -285,14 +288,14 @@ inline void setPositionInWords() { _memoryStatus.positionInBytes = false; };
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
-inline uint32_t getCapacityByte() { return _memoryStatus.memorySize; };  // In bytes
+inline uint32_t getCapacityByte() { return _memoryStatus.maxPosition + 1; };  // In bytes
 inline uint32_t getCapacityBit() { return getCapacityByte() << 3; }; // In bits
 inline uint32_t getCapacityKiByte() { return getCapacityByte() >> 10; };  // In Kibibytes
 inline uint32_t getCapacityKiBit() { return getCapacityKiByte() << 3; }; // In Kibits
 inline uint16_t getPageSize() { return _memoryStatus.pageSize; };  // In bytes
 inline uint16_t getPages() { return getCapacityByte() / getPageSize(); };
 inline uint16_t getPositionReal(uint16_t logicalPosition) \
-  { return logicalPosition + _memoryStatus.zeroPosition; };
+  { return logicalPosition + _memoryStatus.minPosition; };
 inline bool getPositionInBytes() { return _memoryStatus.positionInBytes; };
 
 
@@ -302,9 +305,9 @@ private:
 //------------------------------------------------------------------------------
 struct
 {
-  uint16_t memorySize;  // Capacity of the memory page in bytes
+  uint16_t maxPosition;  // Maximal available position in bytes
   uint16_t pageSize;  // Size of the memory page in bytes
-  uint16_t zeroPosition;  // Physical position for logical 0 position of memory
+  uint16_t minPosition;  // Physical position for logical 0 position of memory
   bool positionInBytes;  // Flag about using position long just 1 byte
 } _memoryStatus;
 
@@ -312,10 +315,6 @@ struct
 //------------------------------------------------------------------------------
 // Protected methods - they return result code if not stated else
 //------------------------------------------------------------------------------
-inline void setMemorySize(uint16_t memorySize) { _memoryStatus.memorySize = memorySize; };
-inline void setPageSize(uint16_t pageSize) { _memoryStatus.pageSize = pageSize; };
-inline void setPositionZero(uint16_t zeroPosition) \
-  { _memoryStatus.zeroPosition = min(zeroPosition, _memoryStatus.memorySize - 1); };
 uint8_t checkPosition(uint16_t position, uint16_t dataLen);
 
 };

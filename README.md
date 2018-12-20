@@ -120,11 +120,11 @@ The method has all arguments defaulted and calling without any parameters is equ
 The method sanitizes and stores input parameters to the class instance object, which determine the capacity parameters of the memory.
 
 #### Syntax
-    uint8_t begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition);
+    uint8_t begin(uint16_t maxPosition, uint16_t pageSize, uint16_t minPosition);
 
 #### Parameters
-<a id="prm_memorySize"></a>
-- **memorySize**: Capacity of the memory in bytes.
+<a id="prm_maxPosition"></a>
+- **maxPosition**: Maximal real position of the memory in bytes. Usually it expresses capacity of the memory minus one, but can be less if some end part of the memory cannot be used.
   - *Valid values*: non-negative integer 0 ~ 65535
   - *Default value*: None
 
@@ -135,8 +135,9 @@ The method sanitizes and stores input parameters to the class instance object, w
   - *Default value*: None
 
 
-<a id="prm_zeroPosition"></a>
-- **zeroPosition**: Real memory position where the memory storage starts in bytes. For instance, real time clock chips have own read only memory starting just after time keeping registers. Memory position in all methods is counted from 0 and considered as a logical position.
+<a id="prm_minPosition"></a>
+- **minPosition**: Minimal real memory position where the memory storage starts in bytes. For instance, real time clock chips have own read only memory starting just after time keeping registers.
+- However, memory position in all other methods is counted from 0 and considered as a logical position, i.e., position from the minimal real position.
   - *Valid values*: non-negative integer 0 ~ 65535
   - *Default value*: 0
 

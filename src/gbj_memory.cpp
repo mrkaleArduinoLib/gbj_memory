@@ -2,12 +2,13 @@
 const String gbj_memory::VERSION = "GBJ_MEMORY 1.0.0";
 
 
-uint8_t gbj_memory::begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition)
+uint8_t gbj_memory::begin(uint16_t maxPosition, uint16_t pageSize, uint16_t minPosition)
 {
+  // Sanitize
+  _memoryStatus.minPosition = min(minPosition, maxPosition);
+  _memoryStatus.maxPosition = maxPosition - _memoryStatus.minPosition;
+  _memoryStatus.pageSize = max(pageSize, 1);
   if (gbj_twowire::begin()) return getLastResult();
-  setMemorySize(memorySize);
-  setPageSize(pageSize);
-  setPositionZero(zeroPosition);
   return getLastResult();
 }
 
@@ -15,7 +16,7 @@ uint8_t gbj_memory::begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroP
 uint8_t gbj_memory::checkPosition(uint16_t position, uint16_t dataLen)
 {
   initLastResult();
-  if (dataLen == 0 || getCapacityByte() < (position + dataLen)) \
+  if (dataLen == 0 || _memoryStatus.maxPosition < (position + dataLen)) \
     return setLastResult(ERROR_POSITION);
   return getLastResult();
 }

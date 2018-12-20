@@ -20,11 +20,14 @@
 
 // Change address for connected experimental memory device
 const byte ADDRESS_DEVICE = 0x68;  // DS1307
+const unsigned int MEMORY_POSITION_MAX = 0x3F;  // Real maximal position
+const unsigned int MEMORY_POSITION_MIN = 0x08;  // Real minimal position
+const unsigned int MEMORY_POSITION_TEST = 0x00;  // Logical test position
+
 gbj_memory Device = gbj_memory();
 // gbj_memory Device = gbj_memory(gbj_memory::CLOCK_400KHZ);
 // gbj_memory Device = gbj_memory(gbj_memory::CLOCK_100KHZ);
 // gbj_memory Device = gbj_memory(gbj_memory::CLOCK_100KHZ, D2, D1);
-const unsigned int MEMORY_POSITION = 0;
 int valueInt = 0xAA55;
 float valueFloat = 123.45;
 
@@ -94,6 +97,10 @@ void errorHandler(String location)
 void setup()
 {
   Serial.begin(9600);
+  Serial.println(SKETCH);
+  Serial.println("Libraries:");
+  Serial.println(gbj_twowire::VERSION);
+  Serial.println("---");
   // Test constructor success
   if (Device.isError())
   {
@@ -101,7 +108,9 @@ void setup()
     return;
   }
   // Initial two-wire bus
-  if (Device.begin(56, 56, 8))  // Parameters for DS1307
+  if (Device.begin(MEMORY_POSITION_MAX, \
+                   MEMORY_POSITION_MAX - MEMORY_POSITION_MIN + 1, \
+                   MEMORY_POSITION_MIN))  // Parameters for DS1307
   {
     errorHandler("Begin");
     return;
@@ -126,13 +135,13 @@ void setup()
   Serial.println("---");
   // Write and read integer
   Serial.println("Stored integer: 0x" + String(valueInt, HEX));
-  if (Device.store(MEMORY_POSITION, valueInt))
+  if (Device.store(MEMORY_POSITION_TEST, valueInt))
   {
     errorHandler("Store integer");
     return;
   }
   valueInt = 0;
-  if (Device.retrieve(MEMORY_POSITION, valueInt))
+  if (Device.retrieve(MEMORY_POSITION_TEST, valueInt))
   {
     errorHandler("Retrieved integer");
     return;
@@ -141,13 +150,13 @@ void setup()
   Serial.println("---");
   // Write and read float
   Serial.println("Stored float: " + String(valueFloat));
-  if (Device.store(MEMORY_POSITION, valueFloat))
+  if (Device.store(MEMORY_POSITION_TEST, valueFloat))
   {
     errorHandler("Store float");
     return;
   }
   valueFloat = 0.0;
-  if (Device.retrieve(MEMORY_POSITION, valueFloat))
+  if (Device.retrieve(MEMORY_POSITION_TEST, valueFloat))
   {
     errorHandler("Retrieved float");
     return;
