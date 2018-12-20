@@ -22,7 +22,7 @@
   CREDENTIALS:
   Author: Libor Gabaj
   GitHub: https://github.com/mrkaleArduinoLib/gbj_memory.git
- */
+*/
 #ifndef GBJ_MEMORY_H
 #define GBJ_MEMORY_H
 
@@ -54,36 +54,36 @@ gbj_memory(uint32_t clockSpeed = CLOCK_100KHZ, uint8_t pinSDA = 4, uint8_t pinSC
 
 
 /*
-  Initialize two-wire bus and chip with parameters stored by constructor.
+  Initialize two-wire bus and parameters of the memory.
 
   DESCRIPTION:
   The method sanitizes and stores input parameters to the class instance object,
-  which determines the operation modus of the chip.
+  which determine the capacity parameters of the memory.
 
   PARAMETERS:
-  type - memory chip typ determining a capacity bit order. The binary value just
-         with capacity bit set determines the memory capacity in kibibits
-         (multiples of 1024). The library supports memory chips with
-         capacities from 1 to 512 Kib. The parameter is constraint to the
-         expected range.
-         - Data type: non-negative integer
-         - Default value: none
-         - Limited range: ADDRESS_MIN ~ AT24C512 or 0 ~ 9
+  memorySize - Capacity of the memory in bytes.
+             - Data type: non-negative integer
+             - Default value: none
+             - Limited range: 0 ~ 65535
 
-  address - One of 8 possible 7 bit addresses of the chip or address offset
-            determined by the connection of address pins.
-            - If address is greater than maximal allowed one, it is defaulted
-              to this maximal value.
-            - If address is lower than minimal allowed one, it is defaulted
-              to this minimal value.
-            - Data type: non-negative integer
-            - Default value: ADDRESS_MIN
-            - Limited range: ADDRESS_MIN ~ ADDRESS_MAX or 0 ~ 7
+  pageSize - Size of the memory page in bytes. This is a chunk of bytes that can
+             be written to the memory at once.
+             - Data type: non-negative integer
+             - Default value: none
+             - Limited range: 0 ~ 65535
 
+  zeroPosition - Real memory position where the memory storage starts in bytes.
+                 For instance, real time clock chips have own read only memory
+                 starting just after time keeping registers.
+                 Memory position in all methods is counted from 0 and considered
+                 as a logical position.
+               - Data type: non-negative integer
+               - Default value: 0
+               - Limited range: 0 ~ (memorySize - 1)
   RETURN:
   Result code.
 */
-uint8_t begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition);
+uint8_t begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition = 0);
 
 
 /*
@@ -93,13 +93,13 @@ uint8_t begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition);
   The method writes input data byte stream to the memory chunked by memory pages
   if needed.
   - If length of the stored byte stream spans over memory pages, the method
-    executes more communication transactions, each for corresponding memory page.
+    executes more bus transmissions, each for corresponding memory page.
 
   PARAMETERS:
-  position - Memory position where the storing should start.
+  position - Logical memory position where the storing should start.
              - Data type: non-negative integer
              - Default value: none
-             - Limited range: 0 ~ getCapacityByte() - 1
+             - Limited range: 0 ~ (getCapacityByte() - 1)
 
   dataBuffer - Pointer to the byte data buffer.
                - Data type: non-negative integer
@@ -121,15 +121,15 @@ uint8_t storeStream(uint16_t position, uint8_t *dataBuffer, uint16_t dataLen);
   Retrieve byte stream from the memory.
 
   DESCRIPTION:
-  The method reads data from memory and places it to the provided data buffer.
-  The buffer should be defined outside the library (in a sketch) with sufficient
-  length for desired data.
+  The method reads data from the memory and places it to the provided data buffer.
+  The buffer should be defined outside this library with sufficient length for
+  desired data.
 
   PARAMETERS:
-  position - Memory position where the retrieving should start.
+  position - Logical memory position where the retrieving should start.
              - Data type: non-negative integer
              - Default value: none
-             - Limited range: 0 ~ getCapacityByte() - 1
+             - Limited range: 0 ~ (getCapacityByte() - 1)
 
   dataBuffer - Pointer to the byte data buffer for placing read data.
                - Data type: non-negative integer
@@ -154,10 +154,10 @@ uint8_t retrieveStream(uint16_t position, uint8_t *dataBuffer, uint16_t dataLen)
   The method writes input byte to defined positions in the memory.
 
   PARAMETERS:
-  position - Memory position where the filling should start.
+  position - Logical memory position where the filling should start.
              - Data type: non-negative integer
              - Default value: none
-             - Limited range: 0 ~ getCapacityByte() - 1
+             - Limited range: 0 ~ (getCapacityByte() - 1)
 
   dataLen - Number of positions to be filled in memory.
             - Data type: non-negative integer
@@ -181,7 +181,7 @@ uint8_t fill(uint16_t position, uint16_t dataLen, uint8_t fillValue);
   DESCRIPTION:
   The method writes byte value 0xFF (all binary 1s) to whole memory.
   - The methods utilizes the method fill() from 0 position with entire byte
-    capacity of a memory chip while it writes memory page by page.
+    capacity of the memory while it writes memory page by page.
 
   PARAMETERS:
   None
@@ -204,10 +204,10 @@ uint8_t erase();
     parameter.
 
   PARAMETERS:
-  position - Memory position where the value storing should start.
+  position - Logical memory position where the value storing should start.
              - Data type: non-negative integer
              - Default value: none
-             - Limited range: 0 ~ getCapacityByte() - 1
+             - Limited range: 0 ~ (getCapacityByte() - 1)
 
   data - Value of particular data type that should be stored in the memory.
          - Data type: dynamic
@@ -229,17 +229,17 @@ uint8_t store(uint16_t position, T data)
 
   DESCRIPTION:
   The method reads a value of particular data type, generic or custom, from the
-  memory to an referenced external variable.
+  memory to a referenced external variable.
   - The method is templated utilizing method retrieveStream(), so that it
     determines data byte stream length automatically.
   - The method does not need to be called by templating syntax, because it is able
     to identify proper data type from provided referenced variable.
 
   PARAMETERS:
-  position - Memory position where the value retrieving should start.
+  position - Logical memory position where the value retrieving should start.
              - Data type: non-negative integer
              - Default value: none
-             - Limited range: 0 ~ getCapacityByte() - 1
+             - Limited range: 0 ~ (getCapacityByte() - 1)
 
   data - Pointer to a referenced variable for placing read data of desired type.
          - Data type: dynamic
@@ -261,8 +261,7 @@ uint8_t retrieve(uint16_t position, T &data)
   Read current position
 
   DESCRIPTION:
-  The method reads recently accessed position incremented by 1 in the mode
-  "current address read".
+  The method reads recently accessed position incremented by 1.
 
   PARAMETERS:
   data - Referenced variable for placing read data byte.
@@ -277,11 +276,6 @@ uint8_t retrieveCurrent(uint8_t &data);
 
 
 //------------------------------------------------------------------------------
-// Public setters - they usually return result code.
-//------------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
 inline uint32_t getCapacityByte() { return _memoryStatus.memorySize; };  // In bytes
@@ -290,8 +284,8 @@ inline uint32_t getCapacityKiByte() { return getCapacityByte() >> 10; };  // In 
 inline uint32_t getCapacityKiBit() { return getCapacityKiByte() << 3; }; // In Kibits
 inline uint16_t getPageSize() { return _memoryStatus.pageSize; };  // In bytes
 inline uint16_t getPages() { return getCapacityByte() / getPageSize(); };
-inline uint16_t getPositionMax() { return _memoryStatus.memorySize - _memoryStatus.zeroPosition - 1; };
-inline uint16_t getPositionReal(uint16_t logicalPosition) { return logicalPosition + _memoryStatus.zeroPosition; };
+inline uint16_t getPositionReal(uint16_t logicalPosition) \
+  { return logicalPosition + _memoryStatus.zeroPosition; };
 inline bool getPositionInBytes() { return _memoryStatus.positionInBytes; };
 
 

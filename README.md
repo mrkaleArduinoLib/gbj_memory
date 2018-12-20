@@ -1,19 +1,21 @@
 <a id="library"></a>
 # gbjMemory
 Library for a generic memory on two-wire (I2C) bus as a parent class for specific memory chips.
+- Library specifies (inherits from) the library `gbjTwoWire`, which specifies the system `TwoWire` library.
+- The class from the library is not intended to be used directly in a sketch, just as a parent class for specific memory chips libraries.
 
 
 #### Particle hardware configuration
-- Connect microcontroller's pin `D0` to EEPROM's pin **SDA** (Serial Data).
-- Connect microcontroller's pin `D1` to EEPROM's pin **SCL** (Serial Clock).
+- Connect microcontroller's pin `D0` to memory's pin **SDA** (Serial Data).
+- Connect microcontroller's pin `D1` to memory's pin **SCL** (Serial Clock).
 
 #### Arduino UNO hardware configuration
-- Connect microcontroller's pin `A4` to EEPROM's pin **SDA** (Serial Data).
-- Connect microcontroller's pin `A5` to EEPROM's pin **SCL** (Serial Clock).
+- Connect microcontroller's pin `A4` to memory's pin **SDA** (Serial Data).
+- Connect microcontroller's pin `A5` to memory's pin **SCL** (Serial Clock).
 
 #### Espressif - ESP8266, ESP32 default hardware configuration
-- Connect microcontroller's pin `D2` to EEPROM's pin **SDA** (Serial Data).
-- Connect microcontroller's pin `D1` to EEPROM's pin **SCL** (Serial Clock).
+- Connect microcontroller's pin `D2` to memory's pin **SDA** (Serial Data).
+- Connect microcontroller's pin `D1` to memory's pin **SCL** (Serial Clock).
 
 
 <a id="dependency"></a>
@@ -29,7 +31,7 @@ Library for a generic memory on two-wire (I2C) bus as a parent class for specifi
 - **TwoWire**: I2C system library loaded from the file *Wire.h*.
 
 #### Custom Libraries
-- **gbjTwoWire**: I2C custom library loaded from the file *gbj_twowire.h*. The library [gbjat24c](#library) inherits common bus functionality from this library.
+- **gbjTwoWire**: I2C custom library loaded from the file *gbj_twowire.h*. The library [gbjMemory](#library) inherits bus transmission functionality from this library.
 
 
 <a id="constants"></a>
@@ -38,7 +40,7 @@ Library for a generic memory on two-wire (I2C) bus as a parent class for specifi
 
 <a id="errors"></a>
 #### Error codes
-- **gbj\_memory::ERROR\_POSITION**: Memory position for storing or retrieving some byte is outside of a valid range.
+- **gbj\_memory::ERROR\_POSITION**: Logical memory position for storing or retrieving some byte is outside of a valid range.
 
 Other error codes as well as result code are inherited from the parent library [gbjTwoWire](#dependency).
 
@@ -49,23 +51,27 @@ Other error codes as well as result code are inherited from the parent library [
 #### Main
 - [gbj_memory()](#gbj_memory)
 - [begin()](#begin)
+- [store()](#store)
 - [storeStream()](#storeStream)
+- [retrieve()](#retrieve)
 - [retrieveStream()](#retrieveStream)
 - [retrieveCurrent()](#retrieveCurrent)
-- [store()](#store)
-- [retrieve()](#retrieve)
 - [fill()](#fill)
 - [erase()](#erase)
-- [detectType()](#detectType)
 
 #### Getters
-- [getType()](#getType)
-- [getPageSize()](#getPageSize)
-- [getPages()](#getPages)
-- [getCapacityBit()](#getCapacityBit)
-- [getCapacityKiBit()](#getCapacityBit)
 - [getCapacityByte()](#getCapacityByte)
 - [getCapacityKiByte()](#getCapacityByte)
+- [getCapacityBit()](#getCapacityBit)
+- [getCapacityKiBit()](#getCapacityBit)
+- [getPageSize()](#getPageSize)
+- [getPages()](#getPages)
+- [getPositionReal()](#getPositionReal)
+- [getPositionInBytes()](#getPositionIn)
+
+#### Protected
+- [setPositionInBytes()](#setPositionIn)
+- [setPositionInWords()](#setPositionIn)
 
 Other possible setters and getters are inherited from the parent library [gbjTwoWire](#dependency) and described there.
 
@@ -99,16 +105,11 @@ The library does not need special constructor and destructor, so that the inheri
   - *Default value*: 5 (GPIO5, D1)
 
 #### Returns
-Object performing the EEPROM management.
-The constructor cannot return [a result or error code](#constants) directly, however, it stores them in the instance object. The result can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
+Object performing the memory management.
+The constructor cannot return [a result or error code](#constants) directly, however, it stores them in the instance object. The result can be tested in the operational code with the inhereted method `getLastResult()`, `isError()`, or `isSuccess()`.
 
 #### Example
 The method has all arguments defaulted and calling without any parameters is equivalent to the calling with all arguments set by corresponding constant with default value:
-
-```cpp
-  gbj_memory Eeprom = gbj_memory(); // It is equivalent to
-  gbj_memory Eeprom = gbj_memory(gbj_memory::CLOCK_100KHZ, D2, D1);
-```
 
 [Back to interface](#interface)
 
@@ -116,26 +117,28 @@ The method has all arguments defaulted and calling without any parameters is equ
 <a id="begin"></a>
 ## begin()
 #### Description
-The method takes, sanitizes, and stores EEPROM parameters to a class instance object and initiates two-wire bus.
-- The method sets parameters specific to the EEPROM itself.
+The method sanitizes and stores input parameters to the class instance object, which determine the capacity parameters of the memory.
 
 #### Syntax
-    uint8_t begin(nt8_t type, uint8_t address);
+    uint8_t begin(uint16_t memorySize, uint16_t pageSize, uint16_t zeroPosition);
 
 #### Parameters
-<a id="prm_type"></a>
-- **type**: One of 10 supported Atmel EEPROM chip types. The input value is limited to maximal supported capacity.
-  - *Valid values*: [gbj\_memory::AT24C01 ~ gbj\_memory::AT24C512](#capacity).
+<a id="prm_memorySize"></a>
+- **memorySize**: Capacity of the memory in bytes.
+  - *Valid values*: non-negative integer 0 ~ 65535
   - *Default value*: None
 
 
-<a id="prm_address"></a>
-- **address**: One of 8 possible 7 bit addresses of the EEPROM chip or binary representation of the address pins configuration, i.e., increment to the basic (minimal) address.
-  - *Valid values*: [gbj\_memory::ADDRESS\_MIN ~ gbj\_memory::ADDRESS\_MAX](#addresses).
-  - *Default value*: [gbj\_memory::ADDRESS\_MIN](#addresses)
-    - The default values is set to address corresponding to all address pins grounded.
-    - The input value is limited to maximal address.
-    - Implementing addressing allows up to 8 EEPROMs present on the same two-wire bus.
+<a id="prm_pageSize"></a>
+- **pageSize**: Size of the memory page in bytes. This is a chunk of bytes that can be written to the memory at once.
+  - *Valid values*: non-negative integer 0 ~ 65535
+  - *Default value*: None
+
+
+<a id="prm_zeroPosition"></a>
+- **zeroPosition**: Real memory position where the memory storage starts in bytes. For instance, real time clock chips have own read only memory starting just after time keeping registers. Memory position in all methods is counted from 0 and considered as a logical position.
+  - *Valid values*: non-negative integer 0 ~ 65535
+  - *Default value*: 0
 
 #### Returns
 Some of [result or error codes](#constants).
@@ -147,14 +150,14 @@ Some of [result or error codes](#constants).
 ## storeStream()
 #### Description
 The method writes input data byte stream to the memory chunked by memory pages if needed.
-- If length of the stored byte stream spans over memory pages, the method executes more communication transactions, each for corresponding memory page.
+- If length of the stored byte stream spans over memory pages, the method executes more bus transmissions, each for corresponding memory page.
 
 #### Syntax
     uint8_t storeStream(uint16_t position, uint8_t *dataBuffer, uint16_t dataLen);
 
 #### Parameters
-- **position**: Memory position where the storing should start. The input value is limited to maximal supported capacity in bytes counting from 0.
-  - *Valid values*: non-negative integer 0 ~ [getCapacityByte()](#getCapacityByte) - 1
+- **position**: Logical memory position where the storing should start. The input value is limited to maximal supported capacity in bytes counting from 0.
+  - *Valid values*: non-negative integer 0 ~ ([getCapacityByte()](#getCapacityByte) - 1)
   - *Default value*: None
 
 
@@ -179,14 +182,14 @@ Some of [result or error codes](#constants).
 <a id="retrieveStream"></a>
 ## retrieveStream()
 #### Description
-The method reads data from memory and places it to the provided data buffer. The buffer should be defined outside the library (in a sketch) with sufficient length for desired data.
+The method reads data from memory and places it to the provided data buffer. The buffer should be defined outside this library with sufficient length for desired data.
 
 #### Syntax
     uint8_t retrieveStream(uint16_t position, uint8_t *dataBuffer, uint16_t dataLen);
 
 #### Parameters
-- **position**: Memory position where the retrieving should start. The input value is limited to maximal supported capacity in bytes counting from 0.
-  - *Valid values*: non-negative integer 0 ~ [getCapacityByte()](#getCapacityByte) - 1
+- **position**: Logical memory position where the retrieving should start. The input value is limited to maximal supported capacity in bytes counting from 0.
+  - *Valid values*: non-negative integer 0 ~ ([getCapacityByte()](#getCapacityByte) - 1)
   - *Default value*: None
 
 
@@ -211,7 +214,7 @@ Some of [result or error codes](#constants).
 <a id="retrieveCurrent"></a>
 ## retrieveCurrent()
 #### Description
-The method reads recently accessed position incremented by 1 in the mode "current address read".
+The method reads recently accessed position incremented by 1.
 
 #### Syntax
     uint8_t retrieveCurrent(uint8_t &data);
@@ -239,12 +242,12 @@ The method writes a value of particular data type, generic or custom, to the mem
     uint8_t store(uint16_t position, T data);
 
 #### Parameters
-- **position**: Memory position where the storing should start. The input value is limited to maximal supported capacity in bytes counting from 0.
-  - *Valid values*: non-negative integer 0 ~ [getCapacityByte()](#getCapacityByte) - 1
+- **position**: Logical memory position where the storing should start. The input value is limited to maximal supported capacity in bytes counting from 0.
+  - *Valid values*: non-negative integer 0 ~ ([getCapacityByte()](#getCapacityByte) - 1)
   - *Default value*: None
 
 
-- **data**: Value of particular data type that should be stored in the memory. If the value of particular data type needs more memory bytes than there are present from the starting position to the end of chip memory, the error is returned.
+- **data**: Value of particular data type that should be stored in the memory. If the value of particular data type needs more memory bytes than there are present from the starting position to the end of the memory, the error is returned.
   - *Valid values*: dynamic data type
   - *Default value*: None
 
@@ -269,12 +272,12 @@ The method reads a value of particular data type, generic or custom, from the me
     uint8_t retrieve(uint16_t position, T &data);
 
 #### Parameters
-- **position**: Memory position where the retrieving should start. The input value is limited to maximal supported capacity in bytes counting from 0.
-  - *Valid values*: non-negative integer 0 ~ [getCapacityByte()](#getCapacityByte) - 1
+- **position**: Logical memory position where the retrieving should start. The input value is limited to maximal supported capacity in bytes counting from 0.
+  - *Valid values*: non-negative integer 0 ~ ([getCapacityByte()](#getCapacityByte) - 1)
   - *Default value*: None
 
 
-- **data**: Pointer to a referenced variable for placing read data of desired type. If the data type of the external variable needs more memory bytes than there are present from the starting position to the end of chip memory, the error is returned.
+- **data**: Pointer to a referenced variable for placing read data of desired type. If the data type of the external variable needs more bytes than there are present from the starting position to the end of the memory, the error is returned.
   - *Valid values*: dynamic data type
   - *Default value*: None
 
@@ -296,12 +299,12 @@ The method writes input byte to defined positions in the memory.
     uint8_t fill(uint16_t position, uint16_t dataLen, uint8_t fillValue);
 
 #### Parameters
-- **position**: Memory position where the storing should start. The input value is limited to maximal supported capacity in bytes counting from 0.
-  - *Valid values*: non-negative integer 0 ~ [getCapacityByte()](#getCapacityByte) - 1
+- **position**: Logical memory position where the storing should start. The input value is limited to maximal supported capacity in bytes counting from 0.
+  - *Valid values*: non-negative integer 0 ~ ([getCapacityByte()](#getCapacityByte) - 1)
   - *Default value*: None
 
 
-- **dataLen**: Number of bytes to be filled in memory. If there are provided more bytes to fill from the position to the end of chip capacity, exceeding memory position are ignored without generating an error.
+- **dataLen**: Number of bytes to be filled in memory. If there are provided more bytes to fill from the position to the end of the memory capacity, exceeding memory positions are ignored without generating an error.
   - *Valid values*: non-negative integer 0 ~ 65535
   - *Default value*: None
 
@@ -323,8 +326,8 @@ Some of [result or error codes](#constants).
 ## erase()
 #### Description
 The method writes byte value `0xFF` (all binary 1s) to entire memory.
-- The methods utilizes the method [fill()](#fill) from 0 position with entire byte capacity of a memory chip while it writes memory page by page.
-- For higher capacity chips the erasing can take a longer time due to paging by memory pages and two-wire buffer limited size.
+- The methods utilizes the method [fill()](#fill) from 0 position with entire byte capacity of the memory while it writes memory page by page.
+- For higher capacity memory the erasing can take a longer time due to paging by memory pages and two-wire buffer limited size.
 
 #### Syntax
     uint8_t erase();
@@ -341,53 +344,44 @@ Some of [result or error codes](#constants).
 [Back to interface](#interface)
 
 
-<a id="detectType"></a>
-## detectType()
+<a id="getCapacityByte"></a>
+## getCapacityByte(), getCapacityKiByte()
 #### Description
-The method detects the type of the EEPROM chip by detecting its capacity.
-- The method tests type from the highest supported capacity.
-- The test is based on writing specific value to 0 position of the EEPROM
-  and another specific value to the first position beyond the capacity of the
-  previous supported type. If the tested type is not correct, the EEPROM
-  rewrites the value in 0 position with tested value, which is different from
-  the reference value written directly to 0 position. The methods decreases
-  tested types until the 0 position is not rewritten.
-- The method really rewrites just 0 position of EEPROM and the position in the
-  middle of detected type capacity, e.g., for AT24C256 chip it is position
-  16384.
+The particular method provides the memory capacity either in bytes or in kibibytes.
 
 #### Syntax
-    uint8_t detectType(uint8_t &type);
-
-#### Parameters
-- **type**: Referenced variable for placing detected EEPROM type.
-  - *Valid values*: [gbj\_memory::AT24C01 ~ gbj\_memory::AT24C512](#capacity)
-  - *Default value*: None
-
-#### Returns
-Some of [result or error codes](#constants).
-
-[Back to interface](#interface)
-
-
-<a id="getType"></a>
-## getType()
-#### Description
-The method provides current type of the EEPROM chip set by the [begin()](#begin) method.
-
-#### Syntax
-    uint8_t getType();
+    uint32_t getCapacityByte();
+    uint32_t getCapacityKiByte();
 
 #### Parameters
 None
 
 #### Returns
-EEPROM type defined by one from class constants [gbj\_memory::AT24C01 ~ gbj\_memory::AT24C512](#capacity).
+Memory capacity in bytes or kibibytes.
 
 #### See also
-[detectType()](#detectType)
+[getCapacityBit(), getCapacityKiBit()](#getCapacityBit)
 
-[begin()](#begin)
+[Back to interface](#interface)
+
+
+<a id="getCapacityBit"></a>
+## getCapacityBit(), getCapacityKiBit()
+#### Description
+The particular method provides the memory capacity either in bits or in kibibits.
+
+#### Syntax
+    uint32_t getCapacityBit();
+    uint32_t getCapacityKiBit();
+
+#### Parameters
+None
+
+#### Returns
+Memory capacity in bits or kibibits.
+
+#### See also
+[getCapacityByte(), getCapacityKiByte()](#getCapacityByte)
 
 [Back to interface](#interface)
 
@@ -404,7 +398,7 @@ The method provides length of the memory page in bytes.
 None
 
 #### Returns
-EEPROM memory page length in bytes.
+Memory page length in bytes.
 
 #### See also
 [getPages()](#getPages)
@@ -415,7 +409,7 @@ EEPROM memory page length in bytes.
 <a id="getPages"></a>
 ## getPages()
 #### Description
-The method provides a number of memory pages.
+The method provides a number of available memory pages.
 
 #### Syntax
     uint16_t getPages();
@@ -424,7 +418,7 @@ The method provides a number of memory pages.
 None
 
 #### Returns
-Number of EEPROM memory pages.
+Number of memory pages.
 
 #### See also
 [getPageSize()](#getPageSize)
@@ -432,43 +426,61 @@ Number of EEPROM memory pages.
 [Back to interface](#interface)
 
 
-<a id="getCapacityBit"></a>
-## getCapacityBit(), getCapacityKiBit()
+<a id="getPositionReal"></a>
+## getPositionReal()
 #### Description
-The particular method provides an EEPROM chip capacity either in bits or in kibibits.
+The method provides real (physical) memory position calculated from the logical one.
 
 #### Syntax
-    uint32_t getCapacityBit();
-    uint32_t getCapacityKiBit();
+    uint16_t getPositionReal();
 
 #### Parameters
 None
 
 #### Returns
-EEPROM chip capacity in bits or kibibits.
-
-#### See also
-[getCapacityByte(), getCapacityKiByte()](#getCapacityByte)
+Number of memory pages.
 
 [Back to interface](#interface)
 
 
-<a id="getCapacityByte"></a>
-## getCapacityByte(), getCapacityKiByte()
+<a id="getPositionIn"></a>
+## getPositionInBytes()
 #### Description
-The particular method provides an EEPROM chip capacity either in bytes or in kibibytes.
+The method provides an internal flag whether just byte should be used for memory addressing.
 
 #### Syntax
-    uint32_t getCapacityByte();
-    uint32_t getCapacityKiByte();
+    bool getPositionInBytes();
 
 #### Parameters
 None
 
 #### Returns
-EEPROM chip capacity in bytes or kibibytes.
+Logical flag for byte addressing of positions.
 
 #### See also
-[getCapacityBit(), getCapacityKiBit()](#getCapacityBit)
+[setPositionInBytes(), setPositionInWords()](#setPositionIn)
+
+[Back to interface](#interface)
+
+
+<a id="setPositionIn"></a>
+## setPositionInBytes(), setPositionInWords()
+#### Description
+The particular method sets an internal flag whether just byte or entire word of provided memory position should be used for memory addressing.
+- Byte addressing ensures, that just the least significant byte is really transmits to the two-wire bus from provided two bytes of a memory position.
+- Byte addressing ensures, that all two bytes of provided memory position are transmitted to the two-wire bus even if the most significant byte of it is zero.
+
+#### Syntax
+    void setPositionInBytes();
+    void setPositionInWords();
+
+#### Parameters
+None
+
+#### Returns
+None
+
+#### See also
+[getPositionInBytes()](#getPositionIn)
 
 [Back to interface](#interface)

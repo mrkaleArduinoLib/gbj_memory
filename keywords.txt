@@ -26,7 +26,6 @@ getCapacityKiBit	KEYWORD2
 getCapacityBit	KEYWORD2
 getCapacityKiByte	KEYWORD2
 getCapacityByte	KEYWORD2
-getPositionMax	KEYWORD2
 getPositionReal	KEYWORD2
 getPositionInBytes	KEYWORD2
 
