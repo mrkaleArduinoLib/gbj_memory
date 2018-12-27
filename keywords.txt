@@ -32,3 +32,5 @@ getPositionInBytes	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
+VERSION	LITERAL1
+ERROR_POSITION	LITERAL1

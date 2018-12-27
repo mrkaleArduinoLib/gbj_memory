@@ -1,7 +1,7 @@
 {
   "name": "gbjMemory",
   "keywords": "memory, twowire, 2-wire, i2c, iic, bus",
-  "description": "Library for Atmel AT24Cxxx EEPROM chips communicating on two-wire (I2C) bus.",
+  "description": "Library for a generic memory on two-wire (I2C) bus as a parent class for specific memory chips.",
   "repository": {
     "type": "git",
     "url": "https://github.com/mrkaleArduinoLib/gbj_memory.git"
