@@ -27,7 +27,7 @@ Library for a generic memory on `two-wire` (also known as <abbr title='Inter-Int
 #### Arduino platform
 * **Arduino.h**: Main include file for the Arduino SDK version greater or equal to 100.
 * **inttypes.h**: Integer type conversions. This header file includes the exact-width integer definitions and extends them with additional facilities provided by the implementation.
-* **TwoWire**: I2C system library loaded from the file *Wire.h*.
+* **TwoWire**: I2C system library loaded from the file `Wire.h`.
 
 #### Custom Libraries
 * **gbjTwoWire**: I2C custom library loaded from the file `gbj_twowire.h`, which provides common bus functionality.
