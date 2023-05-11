@@ -170,7 +170,7 @@ public:
     {
       return getLastResult();
     }
-    setBusRpte();
+    setBusRepeat();
     if (busSendStream(reinterpret_cast<uint8_t *>(&realPosition),
                       getPositionInBytes() ? 1 : 2,
                       true))
@@ -343,7 +343,7 @@ public:
   inline void setPositionInWords() { _memoryStatus.positionInBytes = false; }
 
   // Getters
-  inline uint32_t getCapacityByte() { return _memoryStatus.maxPosition + 1; }
+  inline uint32_t getCapacityByte() { return _memoryStatus.maxPosition + 1L; }
   inline uint32_t getCapacityBit() { return getCapacityByte() << 3; }
   inline uint32_t getCapacityKiByte() { return getCapacityByte() >> 10; }
   inline uint32_t getCapacityKiBit() { return getCapacityKiByte() << 3; }
@@ -354,15 +354,19 @@ public:
     return logicalPosition + _memoryStatus.minPosition;
   }
   inline bool getPositionInBytes() { return _memoryStatus.positionInBytes; };
-  inline bool getPositionInWords() { return !_memoryStatus.positionInBytes; };
+  inline bool getPositionInWords() { return !getPositionInBytes(); };
 
 private:
   struct MemoryStatus
   {
-    uint16_t maxPosition; // Maximal available position in bytes
-    uint16_t pageSize; // Size of the memory page in bytes
-    uint16_t minPosition; // Physical position for logical 0 position of memory
-    bool positionInBytes; // Flag about using position long just 1 byte
+    // Maximal available position in bytes
+    uint16_t maxPosition;
+    // Physical position for logical 0 position of memory
+    uint16_t minPosition;
+    // Size of the memory page in bytes
+    uint16_t pageSize;
+    // Flag about using position long just 1 byte, default Word (false)
+    bool positionInBytes;
   } _memoryStatus;
   inline ResultCodes checkPosition(uint16_t position, uint16_t dataLen)
   {

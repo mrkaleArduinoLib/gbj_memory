@@ -18,6 +18,7 @@
 
 // Change address for connected experimental memory device
 const byte ADDRESS_DEVICE = 0x68; // DS1307
+// const byte ADDRESS_DEVICE = 0x50; // AT24Cxx
 const unsigned int MEMORY_POSITION_MAX = 0x3F; // Real maximal position
 const unsigned int MEMORY_POSITION_MIN = 0x08; // Real minimal position
 const unsigned int MEMORY_POSITION_TEST = 0x00; // Logical test position
@@ -26,70 +27,15 @@ gbj_memory device = gbj_memory();
 // gbj_memory device = gbj_memory(device.CLOCK_400KHZ);
 // gbj_memory device = gbj_memory(device.CLOCK_100KHZ);
 // gbj_memory device = gbj_memory(device.CLOCK_100KHZ, D2, D1);
+byte valueByte = 0xA5; // 10100101
 int valueInt = 0xAA55; // 1010101001010101
 float valueFloat = 123.45;
 
 void errorHandler(String location)
 {
-  if (device.isSuccess())
-  {
-    return;
-  }
-  Serial.print(location);
-  Serial.print(" - Error: ");
-  Serial.print(device.getLastResult());
-  Serial.print(" - ");
-  switch (device.getLastResult())
-  {
-    // General
-    case device.ERROR_ADDRESS:
-      Serial.println("ERROR_ADDRESS");
-      break;
-
-    case device.ERROR_PINS:
-      Serial.println("ERROR_PINS");
-      break;
-
-      // Arduino, Esspressif specific
-#if defined(__AVR__) || defined(ESP8266) || defined(ESP32)
-    case device.ERROR_BUFFER:
-      Serial.println("ERROR_BUFFER");
-      break;
-
-    case device.ERROR_NACK_DATA:
-      Serial.println("ERROR_NACK_DATA");
-      break;
-
-    case device.ERROR_NACK_OTHER:
-      Serial.println("ERROR_NACK_OTHER");
-      break;
-
-      // Particle specific
-#elif defined(PARTICLE)
-    case device.ERROR_BUSY:
-      Serial.println("ERROR_BUSY");
-      break;
-
-    case device.ERROR_END:
-      Serial.println("ERROR_END");
-      break;
-
-    case device.ERROR_TRANSFER:
-      Serial.println("ERROR_TRANSFER");
-      break;
-
-    case device.ERROR_TIMEOUT:
-      Serial.println("ERROR_TIMEOUT");
-      break;
-#endif
-    case device.ERROR_POSITION:
-      Serial.println("ERROR_POSITION");
-      break;
-
-    default:
-      Serial.println("Uknown error");
-      break;
-  }
+  Serial.println(device.getLastErrorTxt(location));
+  Serial.println("---");
+  return;
 }
 
 void setup()
@@ -110,7 +56,8 @@ void setup()
     errorHandler("Begin");
     return;
   }
-  device.setPositionInBytes();
+  device.setPositionInBytes(); // Comment for EEPROM AT24Cxx
+  // device.setDelaySend(10); // Uncomment for EEPROM AT24Cxx
   // Set and test address
   if (device.isError(device.setAddress(ADDRESS_DEVICE)))
   {
@@ -126,6 +73,21 @@ void setup()
   Serial.println(device.getPinSDA());
   Serial.print("Pin SCL: ");
   Serial.println(device.getPinSCL());
+  Serial.println("---");
+  // Write and read byte
+  Serial.println("Stored byte: 0x" + String(valueByte, HEX));
+  if (device.isError(device.store(MEMORY_POSITION_TEST, valueByte)))
+  {
+    errorHandler("Store byte");
+    return;
+  }
+  valueByte = 0;
+  if (device.isError(device.retrieve(MEMORY_POSITION_TEST, valueByte)))
+  {
+    errorHandler("Retrieved byte");
+    return;
+  }
+  Serial.println("Retrieved byte: 0x" + String(valueByte, HEX));
   Serial.println("---");
   // Write and read integer
   Serial.println("Stored integer: 0x" + String(valueInt, HEX));
