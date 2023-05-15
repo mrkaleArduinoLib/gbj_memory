@@ -31,7 +31,7 @@
 class gbj_memory : public gbj_twowire
 {
 public:
-  gbj_memory(ClockSpeed clockSpeed = ClockSpeed::CLOCK_100KHZ,
+  gbj_memory(ClockSpeeds clockSpeed = ClockSpeeds::CLOCK_100KHZ,
              uint8_t pinSDA = 4,
              uint8_t pinSCL = 5)
     : gbj_twowire(clockSpeed, pinSDA, pinSCL){};
