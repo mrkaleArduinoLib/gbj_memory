@@ -72,9 +72,9 @@ public:
                            uint16_t pageSize,
                            uint16_t minPosition = 0)
   {
-    _memoryStatus.minPosition = min(minPosition, maxPosition);
-    _memoryStatus.maxPosition = maxPosition - _memoryStatus.minPosition;
-    _memoryStatus.pageSize = max(pageSize, 1);
+    memoryStatus_.minPosition = min(minPosition, maxPosition);
+    memoryStatus_.maxPosition = maxPosition - memoryStatus_.minPosition;
+    memoryStatus_.pageSize = max(pageSize, 1);
     return gbj_twowire::begin();
   }
 
@@ -117,7 +117,7 @@ public:
     while (dataLen)
     {
       uint8_t pageLen = min(
-        dataLen, _memoryStatus.pageSize - position % _memoryStatus.pageSize);
+        dataLen, memoryStatus_.pageSize - position % memoryStatus_.pageSize);
       if (busSendStreamPrefixed(dataBuffer,
                                 dataLen,
                                 false,
@@ -339,21 +339,21 @@ public:
   }
 
   // Setters
-  inline void setPositionInBytes() { _memoryStatus.positionInBytes = true; }
-  inline void setPositionInWords() { _memoryStatus.positionInBytes = false; }
+  inline void setPositionInBytes() { memoryStatus_.positionInBytes = true; }
+  inline void setPositionInWords() { memoryStatus_.positionInBytes = false; }
 
   // Getters
-  inline uint32_t getCapacityByte() { return _memoryStatus.maxPosition + 1L; }
+  inline uint32_t getCapacityByte() { return memoryStatus_.maxPosition + 1L; }
   inline uint32_t getCapacityBit() { return getCapacityByte() << 3; }
   inline uint32_t getCapacityKiByte() { return getCapacityByte() >> 10; }
   inline uint32_t getCapacityKiBit() { return getCapacityKiByte() << 3; }
-  inline uint16_t getPageSize() { return _memoryStatus.pageSize; } // In bytes
+  inline uint16_t getPageSize() { return memoryStatus_.pageSize; } // In bytes
   inline uint16_t getPages() { return getCapacityByte() / getPageSize(); }
   inline uint16_t getPositionReal(uint16_t logicalPosition)
   {
-    return logicalPosition + _memoryStatus.minPosition;
+    return logicalPosition + memoryStatus_.minPosition;
   }
-  inline bool getPositionInBytes() { return _memoryStatus.positionInBytes; };
+  inline bool getPositionInBytes() { return memoryStatus_.positionInBytes; };
   inline bool getPositionInWords() { return !getPositionInBytes(); };
 
 private:
@@ -367,11 +367,11 @@ private:
     uint16_t pageSize;
     // Flag about using position long just 1 byte, default Word (false)
     bool positionInBytes;
-  } _memoryStatus;
+  } memoryStatus_;
   inline ResultCodes checkPosition(uint16_t position, uint16_t dataLen)
   {
     setLastResult();
-    if (dataLen == 0 || _memoryStatus.maxPosition < (position + dataLen))
+    if (dataLen == 0 || memoryStatus_.maxPosition < (position + dataLen))
     {
       return setLastResult(ResultCodes::ERROR_POSITION);
     }
